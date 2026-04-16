@@ -153,7 +153,7 @@ dizim_AGAIN/
 ### 1. Backend
 
 ```bash
-cd E:/data_eng/dizim_AGAIN/backend
+cd ./backend
 
 # Install dependencies into the project venv
 ../venv/Scripts/pip install -r requirements.txt
