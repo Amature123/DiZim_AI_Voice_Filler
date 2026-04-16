@@ -1,0 +1,10 @@
+# Install in a dedicated conda environment (NOT the main backend venv):
+# conda create -n qwen3-asr python=3.12 -y
+# conda activate qwen3-asr
+# pip install -r asr_service/requirements.txt
+
+qwen-asr[vllm]
+flash-attn --no-build-isolation
+fastapi
+uvicorn
+python-multipart

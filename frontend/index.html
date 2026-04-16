@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DiZim AI — Financial Assistant</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── DESIGN TOKENS ─────────────────────────────────── */
+    :root {
+      --bg-base:        #E8E4DC;
+      --bg-card:        #FFFFFF;
+      --bg-dark:        #0D0D0D;
+      --border-color:   #0D0D0D;
+      --border-sm:      1.5px solid #0D0D0D;
+      --border-md:      2px solid #0D0D0D;
+      --border-lg:      3px solid #0D0D0D;
+      --slab-primary:   #1A3A5C;
+      --slab-energy:    #C9A227;
+      --slab-danger:    #D92B2B;
+      --slab-success:   #1A6B4A;
+      --text-on-slab:   #FFFFFF;
+      --text-primary:   #0D0D0D;
+      --text-muted:     #5C5852;
+      --text-faint:     #9C9890;
+      --shadow-sm:      3px 3px 0 #0D0D0D;
+      --shadow-md:      4px 4px 0 #0D0D0D;
+      --shadow-lg:      6px 6px 0 #0D0D0D;
+      --shadow-hover:   6px 6px 0 #0D0D0D;
+      --font-display:   'Syne', sans-serif;
+      --font-body:      'DM Sans', sans-serif;
+      --font-mono:      'JetBrains Mono', monospace;
+    }
+
+    /* ─── GLOBAL RESET ──────────────────────────────────── */
+    * {
+      border-radius: 0 !important;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-base);
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    [x-cloak] { display: none !important; }
+
+    /* ─── TYPOGRAPHY ────────────────────────────────────── */
+    .font-display { font-family: var(--font-display); }
+    .font-mono    { font-family: var(--font-mono); }
+
+    /* ─── SLAB SYSTEM ───────────────────────────────────── */
+    .slab {
+      display: inline;
+      padding: 2px 8px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      line-height: 1.3;
+    }
+    .slab-primary  { background: var(--slab-primary); color: var(--text-on-slab); }
+    .slab-energy   { background: var(--slab-energy);  color: var(--text-on-slab); }
+    .slab-danger   { background: var(--slab-danger);  color: var(--text-on-slab); }
+    .slab-success  { background: var(--slab-success); color: var(--text-on-slab); }
+    .slab-dark     { background: var(--bg-dark);      color: var(--text-on-slab); }
+
+    /* ─── LAYOUT ────────────────────────────────────────── */
+    .app-shell {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ─── SIDEBAR ───────────────────────────────────────── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-dark);
+      border-right: var(--border-lg);
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 2px solid rgba(255,255,255,0.12);
+    }
+
+    .logo-wordmark {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--bg-base);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(232,228,220,0.4);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      padding: 4px 10px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(232,228,220,0.5);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: #4ADE80;
+      animation: blink 2s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .sidebar-section-label {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: rgba(232,228,220,0.3);
+      padding: 16px 20px 8px;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 8px;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar { width: 2px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+
+    .history-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: default;
+      transition: background 0.1s;
+    }
+
+    .history-item:hover { background: rgba(255,255,255,0.05); }
+
+    .history-icon {
+      width: 28px;
+      height: 28px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .history-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(232,228,220,0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .history-date {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(232,228,220,0.3);
+      margin-top: 2px;
+    }
+
+    .history-empty {
+      padding: 24px 20px;
+      font-size: 11px;
+      color: rgba(232,228,220,0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1.7;
+    }
+
+    .sidebar-footer {
+      border-top: 2px solid rgba(255,255,255,0.1);
+      padding: 12px;
+    }
+
+    .btn-new-doc {
+      width: 100%;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.2);
+      color: rgba(232,228,220,0.7);
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: border-color 0.1s, color 0.1s, background 0.1s;
+    }
+
+    .btn-new-doc:hover {
+      border-color: rgba(255,255,255,0.4);
+      color: var(--bg-base);
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* ─── MAIN ──────────────────────────────────────────── */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── TOP BAR ───────────────────────────────────────── */
+    .topbar {
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-bottom: var(--border-lg);
+      height: 64px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .topbar-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .topbar-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    /* ─── STEP PROGRESS ─────────────────────────────────── */
+    .step-progress {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .step-node {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border: var(--border-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 800;
+      transition: background 0.2s, color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .step-circle.done     { background: var(--slab-success); color: #fff; border-color: var(--slab-success); }
+    .step-circle.active   { background: var(--slab-primary); color: #fff; border-color: var(--slab-primary); }
+    .step-circle.pending  { background: var(--bg-base); color: var(--text-faint); }
+
+    .step-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+
+    .step-label.done     { color: var(--slab-success); }
+    .step-label.active   { color: var(--slab-primary); }
+    .step-label.pending  { color: var(--text-faint); }
+
+    .step-connector {
+      width: 24px;
+      height: 2px;
+      background: var(--border-color);
+      opacity: 0.15;
+      flex-shrink: 0;
+    }
+
+    .step-connector.done { opacity: 1; background: var(--slab-success); }
+
+    /* ─── CONTENT ───────────────────────────────────────── */
+    .content-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+    }
+
+    .content-scroll::-webkit-scrollbar { width: 4px; }
+    .content-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+
+    /* ─── CARDS ─────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: var(--border-lg);
+      box-shadow: var(--shadow-md);
+      padding: 32px;
+    }
+
+    .card-inner {
+      background: var(--bg-base);
+      border: var(--border-md);
+      padding: 20px;
+    }
+
+    /* ─── BUTTONS ───────────────────────────────────────── */
+    .btn {
+      height: 48px;
+      padding: 0 20px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: var(--border-md);
+      box-shadow: var(--shadow-md);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 #0D0D0D;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-primary  { background: var(--slab-primary); color: #fff; }
+    .btn-energy   { background: var(--slab-energy);  color: #fff; }
+    .btn-success  { background: var(--slab-success); color: #fff; }
+    .btn-danger   { background: var(--slab-danger);  color: #fff; }
+    .btn-ghost    { background: transparent; color: var(--text-primary); }
+    .btn-dark     { background: var(--bg-dark); color: var(--bg-base); }
+
+    .btn-full { width: 100%; }
+    .btn-sm   { height: 36px; padding: 0 14px; font-size: 11px; }
+
+    /* ─── TEMPLATE CARDS ────────────────────────────────── */
+    .template-card {
+      border: var(--border-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s;
+      box-shadow: var(--shadow-sm);
+      background: var(--bg-card);
+    }
+
+    .template-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .template-card.selected {
+      background: var(--slab-primary);
+      border-color: var(--slab-primary);
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .template-card.selected .tmpl-name  { color: #fff; }
+    .template-card.selected .tmpl-desc  { color: rgba(255,255,255,0.65); }
+    .template-card.selected .tmpl-icon  { background: rgba(255,255,255,0.15); color: #fff; }
+    .template-card.selected .tmpl-radio { border-color: #fff; background: #fff; }
+    .template-card.selected .tmpl-radio-dot { display: block; }
+
+    .tmpl-icon {
+      width: 40px;
+      height: 40px;
+      border: var(--border-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .tmpl-name {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .tmpl-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    .tmpl-radio {
+      width: 18px;
+      height: 18px;
+      border: var(--border-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.1s;
+    }
+
+    .tmpl-radio-dot {
+      display: none;
+      width: 6px;
+      height: 6px;
+      background: var(--slab-primary);
+    }
+
+    /* ─── DROP ZONE ─────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border-color);
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.1s, border-style 0.1s;
+      background: var(--bg-base);
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      background: #DDD9CF;
+      border-style: solid;
+    }
+
+    .drop-label-main {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .drop-label-main span {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .drop-label-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ─── RECORD BUTTON ─────────────────────────────────── */
+    .record-btn {
+      width: 96px;
+      height: 96px;
+      border: 3px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      background: var(--slab-primary);
+      color: #fff;
+      position: relative;
+    }
+
+    .record-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0 #0D0D0D;
+    }
+
+    .record-btn.recording {
+      background: var(--slab-danger);
+      animation: rec-shake 1.5s ease-in-out infinite;
+    }
+
+    @keyframes rec-shake {
+      0%, 100% { transform: translate(0, 0); }
+      25%       { transform: translate(-1px, -1px); }
+      75%       { transform: translate(1px, 1px); }
+    }
+
+    /* Square pulse ring */
+    .pulse-ring {
+      position: absolute;
+      inset: -8px;
+      border: 2px solid var(--slab-danger);
+      animation: squarePulse 1.2s ease-out infinite;
+    }
+
+    @keyframes squarePulse {
+      0%   { transform: scale(1);    opacity: 0.8; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
+
+    /* ─── INPUTS ────────────────────────────────────────── */
+    .field-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .field-input {
+      width: 100%;
+      background: #fff;
+      border: var(--border-md);
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.1s, box-shadow 0.1s;
+    }
+
+    .field-input:focus {
+      border-color: var(--slab-primary);
+      box-shadow: 3px 3px 0 var(--slab-primary);
+    }
+
+    textarea.field-input {
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.6;
+    }
+
+    /* ─── CHIPS / STATUS ────────────────────────────────── */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: var(--border-sm);
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .chip-template {
+      background: var(--bg-base);
+      color: var(--text-primary);
+    }
+
+    /* ─── FORMAT CHOOSER ────────────────────────────────── */
+    .format-btn {
+      flex: 1;
+      height: 44px;
+      border: var(--border-md);
+      background: var(--bg-base);
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.1s, color 0.1s, box-shadow 0.1s;
+    }
+
+    .format-btn.selected {
+      background: var(--slab-primary);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ─── ERROR / LOADER ────────────────────────────────── */
+    .error-banner {
+      border: 2px solid var(--slab-danger);
+      background: #FFF0F0;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .error-text {
+      font-size: 12px;
+      color: var(--slab-danger);
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .loader-banner {
+      border: var(--border-md);
+      background: var(--bg-base);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-color);
+      border-top-color: transparent;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-text {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    /* ─── FILE SELECTED ─────────────────────────────────── */
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: var(--border-md);
+      padding: 12px 14px;
+      background: var(--bg-base);
+    }
+
+    .file-icon {
+      width: 36px;
+      height: 36px;
+      border: var(--border-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--bg-card);
+    }
+
+    .file-name {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* ─── SUCCESS SCREEN ────────────────────────────────── */
+    .success-stamp {
+      width: 80px;
+      height: 80px;
+      border: var(--border-lg);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--slab-success);
+      color: #fff;
+      margin: 0 auto 24px;
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      text-align: center;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .success-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 28px;
+    }
+
+    /* ─── SECTION NUMBER ────────────────────────────────── */
+    .section-num {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* ─── DIVIDER ───────────────────────────────────────── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border-color);
+      opacity: 0.12;
+    }
+
+    .divider-label {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-faint);
+    }
+
+    /* ─── FADE UP ────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up { animation: fadeUp 0.28s ease-out both; }
+
+    /* ─── REC TIMER ─────────────────────────────────────── */
+    .rec-timer {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--slab-danger);
+      letter-spacing: 0.06em;
+    }
+
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body x-data="app()" x-init="init()">
+
+<div class="app-shell">
+
+  <!-- ══════════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <div class="logo-wordmark">DiZim<span class="slab slab-energy" style="font-size:14px;padding:2px 6px;margin-left:4px;vertical-align:middle">AI</span></div>
+      <div class="logo-sub">Financial Assistant</div>
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        Backend online
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">History</div>
+
+    <div class="sidebar-scroll">
+      <template x-if="history.length === 0">
+        <div class="history-empty">
+          No documents<br/>created yet
+        </div>
+      </template>
+
+      <template x-for="doc in history.slice(0,12)" :key="doc.id">
+        <div class="history-item">
+          <div class="history-icon">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="rgba(232,228,220,0.5)" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div style="min-width:0">
+            <div class="history-name" x-text="doc.template_id || 'Document'"></div>
+            <div class="history-date" x-text="doc.created_at ? doc.created_at.slice(0,10) : ''"></div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div class="sidebar-footer">
+      <button @click="resetAll()" class="btn-new-doc">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Document
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════
+       MAIN
+  ══════════════════════════════════════ -->
+  <div class="main-area">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div>
+        <div class="topbar-title" x-text="stepMeta[step].title"></div>
+        <div class="topbar-sub" x-text="stepMeta[step].sub"></div>
+      </div>
+
+      <!-- Step progress -->
+      <div class="step-progress">
+        <template x-for="(s, i) in stepLabels" :key="i">
+          <div class="step-node">
+            <div :class="{
+                'step-circle': true,
+                'done':    i < step,
+                'active':  i === step,
+                'pending': i > step
+              }">
+              <template x-if="i < step">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+              </template>
+              <template x-if="i >= step">
+                <span x-text="i + 1"></span>
+              </template>
+            </div>
+            <span :class="{
+                'step-label hidden md:block': true,
+                'done':    i < step,
+                'active':  i === step,
+                'pending': i > step
+              }" x-text="s"></span>
+            <template x-if="i < stepLabels.length - 1">
+              <div :class="{ 'step-connector': true, 'done': i < step }"></div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content-scroll">
+      <!-- ════════════════════════
+           VIETTEL CONFIG PANEL
+      ════════════════════════ -->
+      <div style="max-width:520px;margin:0 auto 16px;cursor:pointer"
+           @click="showConfig = !showConfig">
+        <div class="card-inner" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+          <span style="font-family:var(--font-display);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em">
+            ⚙ Viettel S-Invoice Configuration
+          </span>
+          <span style="font-size:10px;color:var(--text-muted)" x-text="showConfig ? '▲ Collapse' : '▼ Expand'"></span>
+        </div>
+        <div x-show="showConfig" x-cloak @click.stop style="border:var(--border-md);border-top:none;background:var(--bg-card);padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div>
+            <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:4px">Tax ID (VAT)</label>
+            <input x-model="viettelMst" type="text" placeholder="Leave blank = use .env"
+              style="width:100%;border:var(--border-md);padding:8px 10px;font-family:var(--font-mono);font-size:12px;background:var(--bg-base)">
+          </div>
+          <div>
+            <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:4px">Viettel Account</label>
+            <input x-model="viettelUser" type="text" placeholder="Leave blank = use .env"
+              style="width:100%;border:var(--border-md);padding:8px 10px;font-family:var(--font-mono);font-size:12px;background:var(--bg-base)">
+          </div>
+          <div>
+            <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:4px">Password</label>
+            <input x-model="viettelPass" type="password" placeholder="Leave blank = use .env"
+              style="width:100%;border:var(--border-md);padding:8px 10px;font-family:var(--font-mono);font-size:12px;background:var(--bg-base)">
+          </div>
+          <p style="font-size:10px;color:var(--text-faint);margin-top:2px">Priority: input value > .env variable</p>
+        </div>
+      </div>
+
+      <!-- ════════════════════════
+           STEP 0 — INPUT
+      ════════════════════════ -->
+      <div x-show="step === 0" x-cloak class="fade-up" style="max-width:520px;margin:0 auto">
+        <div class="card">
+
+          <span class="section-num">01 / Input</span>
+          <h2 style="font-family:var(--font-display);font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;margin-bottom:16px">
+            Speak or type <span class="slab slab-energy">invoice info</span>
+          </h2>
+
+          <!-- ASR toggle -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+            <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted)">Use local ASR (Phu's model :8001)</label>
+            <div @click="useLocalAsr = !useLocalAsr"
+              :style="'width:36px;height:20px;border:var(--border-md);cursor:pointer;background:' + (useLocalAsr ? 'var(--slab-primary)' : 'var(--bg-base)') + ';display:flex;align-items:center;padding:2px;transition:background 0.1s'">
+              <div :style="'width:14px;height:14px;background:' + (useLocalAsr ? '#fff' : 'var(--text-faint)') + ';transition:transform 0.1s;transform:translateX(' + (useLocalAsr ? '16px' : '0') + ')'"></div>
+            </div>
+          </div>
+
+          <!-- Web Speech API mic (default) -->
+          <template x-if="!useLocalAsr">
+            <div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px">
+                <button @click="toggleMic()"
+                  :class="{'record-btn': true, 'recording': isListening}">
+                  <div x-show="isListening" class="pulse-ring"></div>
+                  <template x-if="!isListening">
+                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16c-2.47 0-4.52-1.8-4.93-4.15-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+                    </svg>
+                  </template>
+                  <template x-if="isListening">
+                    <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                      <rect x="6" y="6" width="12" height="12"/>
+                    </svg>
+                  </template>
+                </button>
+                <div style="text-align:center">
+                  <div style="font-family:var(--font-display);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em"
+                       x-text="isListening ? 'Listening — tap to stop' : 'Tap to speak (Chrome/Edge)'"></div>
+                  <div x-show="liveText" style="font-size:12px;color:var(--text-muted);margin-top:6px;font-style:italic" x-text="liveText"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Local ASR mic (Phu) -->
+          <template x-if="useLocalAsr">
+            <div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px">
+                <button @click="toggleLocalRecording()"
+                  :class="{'record-btn': true, 'recording': isRecording}">
+                  <div x-show="isRecording" class="pulse-ring"></div>
+                  <template x-if="!isRecording && !isTranscribing">
+                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16c-2.47 0-4.52-1.8-4.93-4.15-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+                    </svg>
+                  </template>
+                  <template x-if="isRecording">
+                    <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                      <rect x="6" y="6" width="12" height="12"/>
+                    </svg>
+                  </template>
+                  <template x-if="isTranscribing">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite">
+                      <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                    </svg>
+                  </template>
+                </button>
+                <div style="text-align:center">
+                  <div style="font-family:var(--font-display);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em"
+                       x-text="isTranscribing ? 'Processing...' : isRecording ? 'Recording — tap to stop' : 'Tap to record (local ASR)'"></div>
+                  <div x-show="recordingTime > 0 && isRecording" class="rec-timer" style="margin-top:4px" x-text="formatTime(recordingTime)"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Divider -->
+          <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-label">Or enter text</span>
+            <div class="divider-line"></div>
+          </div>
+
+          <!-- Text input -->
+          <textarea x-model="transcribedText" rows="4"
+            placeholder="Ex: Name Nguyen Van A, company ABC Ltd., bought 2 laptops for 15 million, 8 percent tax..."
+            style="width:100%;border:var(--border-md);padding:10px;font-size:13px;font-family:var(--font-body);resize:vertical;background:var(--bg-base);margin-bottom:16px"></textarea>
+
+          <!-- Error -->
+          <div x-show="error" style="background:#FFF0F0;border:var(--border-sm);border-color:var(--slab-danger);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--slab-danger)" x-text="error"></div>
+
+          <button @click="extractFields()" :disabled="isExtracting || !transcribedText.trim()" class="btn btn-primary btn-full">
+            <template x-if="!isExtracting">
+              <span>Extract invoice info</span>
+            </template>
+            <template x-if="isExtracting">
+              <span>Processing with AI...</span>
+            </template>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ════════════════════════
+           STEP 1 — REVIEW
+      ════════════════════════ -->
+      <div x-show="step === 1" x-cloak class="fade-up" style="max-width:560px;margin:0 auto">
+        <div class="card">
+
+          <span class="section-num">02 / Review</span>
+          <h2 style="font-family:var(--font-display);font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;margin-bottom:20px">
+            Review <span class="slab slab-primary">invoice info</span>
+          </h2>
+
+          <!-- Buyer info -->
+          <div class="card-inner" style="margin-bottom:14px">
+            <div style="font-family:var(--font-display);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">Buyer information</div>
+            <template x-for="[k, v] in Object.entries(flatFields().buyer).filter(([,v]) => v !== '' && v !== null && v !== 0)" :key="k">
+              <div style="display:flex;gap:8px;margin-bottom:4px;font-size:12px">
+                <span style="color:var(--text-muted);min-width:140px;font-family:var(--font-mono)" x-text="k"></span>
+                <span x-text="v"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Items table -->
+          <div class="card-inner" style="margin-bottom:14px">
+            <div style="font-family:var(--font-display);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">Goods / Services</div>
+            <template x-for="(item, idx) in flatFields().items" :key="idx">
+              <div style="border:var(--border-sm);padding:10px;margin-bottom:6px;font-size:12px">
+                <div style="font-weight:600;margin-bottom:4px" x-text="(idx+1) + '. ' + (item.itemName || '(no name)')"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;color:var(--text-muted)">
+                  <span>Qty: <b x-text="item.quantity"></b></span>
+                  <span>Unit: <b x-text="item.unitName || '—'"></b></span>
+                  <span>Unit Price: <b x-text="(item.unitPrice||0).toLocaleString('vi-VN')"></b> VND</span>
+                  <span>Tax: <b x-text="(item.taxPercentage||8) + '%'"></b></span>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Raw JSON (collapsible) -->
+          <details style="margin-bottom:16px">
+            <summary style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;color:var(--text-muted)">Raw JSON</summary>
+            <pre style="background:var(--bg-base);border:var(--border-sm);padding:12px;font-size:11px;overflow-x:auto;margin-top:8px;max-height:260px" x-text="JSON.stringify(extractedFields, null, 2)"></pre>
+          </details>
+
+          <!-- Error -->
+          <div x-show="error" style="background:#FFF0F0;border:var(--border-sm);border-color:var(--slab-danger);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--slab-danger)" x-text="error"></div>
+
+          <div style="display:flex;gap:10px">
+            <button @click="step = 0" class="btn btn-ghost" style="flex:1">← Back</button>
+            <button @click="publishInvoice()" :disabled="isPublishing" class="btn btn-success" style="flex:2">
+              <template x-if="!isPublishing"><span>Publish to Viettel</span></template>
+              <template x-if="isPublishing"><span>Sending...</span></template>
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════
+           STEP 2 — RESULT
+      ════════════════════════ -->
+      <div x-show="step === 2" x-cloak class="fade-up" style="max-width:520px;margin:0 auto">
+        <div class="card">
+
+          <template x-if="publishResult && !publishResult.viettel_error">
+            <div>
+              <div class="success-stamp">
+                <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="success-title">Invoice Published</div>
+              <div class="success-sub">Viettel S-Invoice — success</div>
+
+              <div class="card-inner" style="margin-bottom:16px">
+                <template x-if="publishResult.invoice_no">
+                  <div style="display:flex;gap:8px;margin-bottom:6px;font-size:13px">
+                    <span style="color:var(--text-muted);min-width:140px">Invoice No.</span>
+                    <span style="font-family:var(--font-mono);font-weight:700;color:var(--slab-success)" x-text="publishResult.invoice_no"></span>
+                  </div>
+                </template>
+                <template x-if="publishResult.transaction_id">
+                  <div style="display:flex;gap:8px;margin-bottom:6px;font-size:12px">
+                    <span style="color:var(--text-muted);min-width:140px">Transaction ID</span>
+                    <span style="font-family:var(--font-mono)" x-text="publishResult.transaction_id"></span>
+                  </div>
+                </template>
+                <template x-if="publishResult.reservation_code">
+                  <div style="display:flex;gap:8px;font-size:12px">
+                    <span style="color:var(--text-muted);min-width:140px">Reservation Code</span>
+                    <span style="font-family:var(--font-mono)" x-text="publishResult.reservation_code"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <!-- Viettel error (but PDF still generated) -->
+          <template x-if="publishResult && publishResult.viettel_error">
+            <div>
+              <div style="background:#FFF0F0;border:var(--border-md);border-color:var(--slab-danger);padding:14px;margin-bottom:16px">
+                <div style="font-family:var(--font-display);font-size:13px;font-weight:800;text-transform:uppercase;margin-bottom:6px;color:var(--slab-danger)">Viettel API Error</div>
+                <div style="font-size:12px;color:var(--slab-danger)" x-text="publishResult.viettel_error"></div>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">PDF generated locally (not officially published).</p>
+            </div>
+          </template>
+
+          <button @click="downloadPdf()" class="btn btn-primary btn-full" style="margin-bottom:10px">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            </svg>
+            Download PDF
+          </button>
+
+          <button @click="resetAll()" class="btn btn-ghost btn-full">Create New Invoice</button>
+        </div>
+      </div>
+
+    </div><!-- /content-scroll -->
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<!-- ══════════════════════════════════════
+     ALPINE APP
+══════════════════════════════════════ -->
+<script>
+const API = 'http://localhost:8000';
+
+function app() {
+  return {
+    // ── STEP STATE ──────────────────────────────────────
+    step: 0,
+    stepLabels: ['Input', 'Review', 'Publish'],
+    stepMeta: [
+      { title: 'Voice or text input',    sub: 'Speak or type invoice information' },
+      { title: 'Review extracted fields', sub: 'Check and edit before publishing' },
+      { title: 'Invoice published',       sub: 'Viettel S-Invoice result' },
+    ],
+
+    // ── VIETTEL CONFIG ──────────────────────────────────
+    showConfig: false,
+    viettelMst:  '',
+    viettelUser: '',
+    viettelPass: '',
+
+    // ── INPUT STATE ─────────────────────────────────────
+    transcribedText: '',
+    useLocalAsr: false,
+
+    // Web Speech API state
+    recognition: null,
+    isListening: false,
+    spokenText: '',
+    lastHeardText: '',
+    liveText: '',
+
+    // MediaRecorder state (for local ASR)
+    isRecording: false,
+    recordingTime: 0,
+    recordingTimer: null,
+    mediaRecorder: null,
+    audioChunks: [],
+    selectedFile: null,
+
+    // ── LOADING FLAGS ───────────────────────────────────
+    isTranscribing: false,
+    isExtracting:   false,
+    isPublishing:   false,
+
+    // ── DATA ────────────────────────────────────────────
+    extractedFields: {},
+    publishResult:   null,
+    history: [],
+    error: '',
+
+    // ── INIT ────────────────────────────────────────────
+    async init() {
+      await this.loadHistory();
+    },
+
+    async loadHistory() {
+      try {
+        const r = await fetch(`${API}/api/history`);
+        if (r.ok) this.history = await r.json();
+      } catch {}
+    },
+
+    // ── WEB SPEECH API MIC ──────────────────────────────
+    toggleMic() {
+      if (this.isListening) {
+        this.recognition && this.recognition.stop();
+        return;
+      }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        this.error = 'Browser does not support Web Speech API. Use Chrome or Edge.';
+        return;
+      }
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'vi-VN';
+      this.recognition.continuous = true;
+      this.recognition.interimResults = true;
+      this.spokenText = '';
+      this.lastHeardText = '';
+      this.liveText = 'Listening...';
+      this.error = '';
+
+      this.recognition.onresult = (event) => {
+        let interim = '';
+        let finalText = '';
+        for (let i = 0; i < event.results.length; i++) {
+          const t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) finalText += t + ' ';
+          else interim += t;
+        }
+        if (finalText) this.spokenText = finalText;
+        this.lastHeardText = finalText + interim;
+        this.liveText = this.lastHeardText || 'Listening...';
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+        const text = (this.spokenText || this.lastHeardText).trim();
+        if (text) {
+          this.transcribedText = text;
+          this.liveText = '';
+        } else {
+          this.liveText = '';
+          this.error = 'No audio detected. Please speak clearly and try again.';
+        }
+      };
+
+      this.recognition.onerror = (e) => {
+        if (e.error === 'not-allowed') this.error = 'Please grant microphone permission to the browser.';
+        this.isListening = false;
+      };
+
+      this.recognition.start();
+      this.isListening = true;
+    },
+
+    // ── LOCAL ASR RECORDING (Phu's model) ──────────────
+    async toggleLocalRecording() {
+      if (this.isRecording) {
+        clearInterval(this.recordingTimer);
+        this.isRecording = false;
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+          this.mediaRecorder.stop();
+        }
+        return;
+      }
+      this.error = '';
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.audioChunks = [];
+        this.mediaRecorder = new MediaRecorder(stream);
+        this.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) this.audioChunks.push(e.data); };
+        this.mediaRecorder.onstop = () => {
+          const blob = new Blob(this.audioChunks, { type: 'audio/wav' });
+          this.selectedFile = new File([blob], 'recording.wav', { type: 'audio/wav' });
+          stream.getTracks().forEach(t => t.stop());
+          this.sendToLocalAsr();
+        };
+        this.mediaRecorder.start(200);
+        this.isRecording = true;
+        this.recordingTime = 0;
+        this.recordingTimer = setInterval(() => this.recordingTime++, 1000);
+      } catch (e) {
+        this.error = 'Cannot access microphone: ' + e.message;
+      }
+    },
+
+    async sendToLocalAsr() {
+      if (!this.selectedFile) return;
+      this.isTranscribing = true;
+      this.error = '';
+      try {
+        const fd = new FormData();
+        fd.append('audio', this.selectedFile, this.selectedFile.name);
+        const r = await fetch(`${API}/api/transcribe`, { method: 'POST', body: fd });
+        if (r.ok) {
+          this.transcribedText = (await r.json()).text;
+        } else {
+          const err = await r.json().catch(() => ({ detail: r.statusText }));
+          this.error = err.detail || 'Transcription failed';
+        }
+      } catch {
+        this.error = 'Cannot connect to backend or local ASR service is not running.';
+      } finally {
+        this.isTranscribing = false;
+      }
+    },
+
+    // ── EXTRACT ─────────────────────────────────────────
+    async extractFields() {
+      if (!this.transcribedText.trim()) {
+        this.error = 'Please enter or speak invoice info first.';
+        return;
+      }
+      this.isExtracting = true;
+      this.error = '';
+      try {
+        const r = await fetch(`${API}/api/extract`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: this.transcribedText, templateType: 'hoa-don-gtgt' }),
+        });
+        if (r.ok) {
+          this.extractedFields = (await r.json()).fields;
+          this.step = 1;
+        } else {
+          const err = await r.json().catch(() => ({ detail: r.statusText }));
+          this.error = 'Extraction failed: ' + (err.detail || r.statusText);
+        }
+      } catch {
+        this.error = 'Cannot connect to backend (localhost:8000).';
+      } finally {
+        this.isExtracting = false;
+      }
+    },
+
+    // ── PUBLISH ──────────────────────────────────────────
+    async publishInvoice() {
+      this.isPublishing = true;
+      this.error = '';
+      try {
+        const body = {
+          invoice_data: this.extractedFields,
+          viettel_mst:  this.viettelMst  || null,
+          viettel_user: this.viettelUser || null,
+          viettel_pass: this.viettelPass || null,
+        };
+        const r = await fetch(`${API}/api/invoice/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (r.ok) {
+          const data = await r.json();
+          const result = data.viettel_response?.result;
+          this.publishResult = {
+            run_id:           data.run_id,
+            invoice_no:       result?.invoiceNo || null,
+            transaction_id:   result?.transactionID || null,
+            reservation_code: result?.reservationCode || null,
+            pdf_url:          data.pdf_url,
+            viettel_error:    data.viettel_error || null,
+          };
+          this.step = 2;
+          this.loadHistory();
+        } else {
+          const err = await r.json().catch(() => ({ detail: r.statusText }));
+          this.error = 'Publish failed: ' + (err.detail || r.statusText);
+        }
+      } catch {
+        this.error = 'Cannot connect to backend.';
+      } finally {
+        this.isPublishing = false;
+      }
+    },
+
+    downloadPdf() {
+      if (!this.publishResult?.pdf_url) return;
+      window.open(`${API}${this.publishResult.pdf_url}`, '_blank');
+    },
+
+    // ── UTILS ────────────────────────────────────────────
+    resetAll() {
+      this.step = 0;
+      this.transcribedText = '';
+      this.extractedFields = {};
+      this.publishResult   = null;
+      this.selectedFile    = null;
+      this.error           = '';
+      this.recordingTime   = 0;
+      this.liveText        = '';
+      if (this.isListening) { this.recognition && this.recognition.stop(); this.isListening = false; }
+      if (this.isRecording) { clearInterval(this.recordingTimer); this.isRecording = false; }
+    },
+
+    formatTime(s) {
+      return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    },
+
+    // Helper to flatten Viettel JSON for display
+    flatFields() {
+      const f = this.extractedFields;
+      const buyer = f.buyerInfo || {};
+      const info  = f.generalInvoiceInfo || {};
+      const items = f.itemInfo || [];
+      return { buyer, info, items };
+    },
+  }
+}
+</script>
+</body>
+</html>
